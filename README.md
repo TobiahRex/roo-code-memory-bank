@@ -1,320 +1,142 @@
-<div align="center">
+# Roo Code Memory Bank Manager
 
-## Be sure to check out the new ✨[Context Portal MCP](https://github.com/GreatScottyMac/context-portal)✨
+A system for managing personalized Roo Code Memory Banks across different projects and git branches without version controlling them.
 
-<br>
+## Features
 
-# 🧠 Roo Code Memory Bank
+- Stores memory banks outside project directories in a centralized local location
+- Automatically detects current project and git branch
+- Copies the appropriate memory bank into the project root when switching contexts
+- Ensures memory banks are properly gitignored
+- Supports workflows for creating, switching, backing up, and synchronizing memory banks
+- Handles edge cases like new branches or projects
+- Implements an effective naming convention for memory banks
+- Supports advanced git workflows including rebasing and branch chaining
+- Automatically handles memory bank inheritance in branch chains
+- Properly merges memory banks during rebase operations
 
-**Persistent Project Context for AI-Assisted Development**
+## Directory Structure
 
-[![VS Code Extension](https://img.shields.io/badge/VS%20Code-Extension-blue.svg)](https://github.com/RooVetGit/Roo-Code)
-[![GitHub](https://img.shields.io/badge/View%20on-GitHub-lightgrey.svg)](https://github.com/GreatScottyMac/roo-code-memory-bank)
-
-</div>
-
-## 🎯 Overview
-
-Roo Code Memory Bank solves a critical challenge in AI-assisted development: **maintaining context across sessions**. By providing a structured memory system integrated with VS Code, it ensures your AI assistant maintains a deep understanding of your project across sessions.
-
-### Key Components
-
-```mermaid
-graph LR
-    A[Memory Bank] --> B[Core Files]
-    A --> C[Mode Rules]
-    A --> D[VS Code UI]
-    B --> E[Project Context]
-    B --> F[Decisions]
-    B --> G[Progress]
-    C --> H[Architect]
-    C --> I[Code]
-    C --> J[Ask]
-    C --> K1[Debug]
-    K[Real-time Updates] --> B
-    K --> L[Continuous Sync]
-    L --> M[Auto-save]
-    L --> N[Event Tracking]
-```
-
-- 🧠 **Memory Bank**: Persistent storage for project knowledge
-- 📋 **Mode Rules**: YAML-based behavior configuration
-- 🔧 **VS Code Integration**: Seamless development experience
-- ⚡ **Real-time Updates**: Continuous context synchronization
-
-## 🚀 Quick Start
-
-### 1. Mode-specific Custom Instructions
-
-1. Open the Roo Code Prompts settings.
-2. Select the mode to modify.
-3. Copy/Paste the contents of the corresponding [memory_bank_strategy_"mode".yml](https://github.com/GreatScottyMac/roo-code-memory-bank/tree/main/modules) file.
-4. Save the changes. 
-
-<img src="https://raw.githubusercontent.com/GreatScottyMac/roo-code-memory-bank/main/images/prompt_settings.png" alt="prompt_settings.png" width="300"/>
-
-### 2. Initialize Memory Bank
-
-1. Switch to **Architect** or **Code** mode in Roo Code chat
-2. Send a message (e.g., "hello")
-3. Roo will automatically:
-   - 🔍 Scan for `memory-bank/` directory
-   - 📁 Create it if missing (with your approval)
-   - 📝 Initialize core files
-   - 🚦 Provide next steps
-
-<details>
-<summary>💡 Pro Tip: Project Brief</summary>
-
-Create a `projectBrief.md` in your project root **before** initialization to give Roo immediate project context.
-</details>
-
-### File Organization
+The system uses the following directory structure for centralized memory bank storage:
 
 ```
-project-root/
-├── memory-bank/
-│   ├── activeContext.md
-│   ├── productContext.md
-│   ├── progress.md
-│   └── decisionLog.md  
-└── projectBrief.md
+~/code/ai-memory-banks/
+├── david/
+│   ├── project1/
+│   │   ├── main/
+│   │   │   ├── activeContext.md
+│   │   │   ├── productContext.md
+│   │   │   ├── progress.md
+│   │   │   ├── decisionLog.md
+│   │   │   └── systemPatterns.md
+│   │   └── feature-branch/
+│   │       └── ...
+│   └── project2/
+│       └── ...
+├── gather/
+│   └── ...
+├── me/
+│   └── ...
+├── play/
+│   └── ...
+├── stitch/
+│   └── ...
+└── world/
+    └── ...
 ```
 
-## 📚 Memory Bank Structure
+## Installation
 
-```mermaid
-graph TD
-    MB[memory-bank/] --> AC[activeContext.md]
-    MB --> DL[decisionLog.md]
-    MB --> PC[productContext.md]
-    MB --> PR[progress.md]
-    MB --> PB[projectBrief.md]
-    MB --> SP[systemPatterns.md]
-    
-    subgraph Core Files
-        AC[Current Session State]
-        DL[Technical Decisions]
-        PC[Project Overview]
-        PR[Progress Tracking]
-    end
-    
-    subgraph Optional
-        PB[Project Brief]
-        SP[System Patterns]
-    end
-```
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/yourusername/roo-code-memory-bank-manager.git
+   cd roo-code-memory-bank-manager
+   ```
 
-<details>
-<summary>📖 View File Descriptions</summary>
+2. Run the installation script:
+   ```bash
+   chmod +x install_memory_bank_manager.sh
+   ./install_memory_bank_manager.sh
+   ```
 
-| File | Purpose |
-|------|----------|
-| `activeContext.md` | Tracks current goals, decisions, and session state |
-| `decisionLog.md` | Records architectural choices and their rationale |
-| `productContext.md` | Maintains high-level project context and knowledge |
-| `progress.md` | Documents completed work and upcoming tasks |
-| `projectBrief.md` | Contains initial project requirements (optional) |
-| `systemPatterns.md` | Documents recurring patterns and standards |
+3. Source your ~/.zshrc or restart your terminal:
+   ```bash
+   source ~/.zshrc
+   ```
 
-</details>
+4. Navigate to a project and create your first memory bank:
+   ```bash
+   cd ~/path/to/your/project
+   mb create
+   ```
 
-## ✨ Features
+## Usage
 
-### 🧠 Persistent Context
-- Remembers project details across sessions
-- Maintains consistent understanding of your codebase
-- Tracks decisions and their rationale
+The memory bank manager provides a command-line interface through the `mb` command:
 
-### 📊 Knowledge Management
-- Structured documentation with clear purposes
-- Technical decision tracking with rationale
-- Automated progress monitoring
-- Cross-referenced project knowledge
+### Basic Commands
 
-## 💡 Pro Tips
+- `mb` - Show status of the current memory bank
+- `mb create` - Create a new memory bank for the current project and branch
+- `mb switch [branch]` - Switch to a different branch's memory bank
+- `mb sync` - Synchronize the project and central memory banks
+- `mb list` - List available memory banks for the current project
 
-### Architect Mode
-Roo Code Memory Bank's Architect mode is designed for high-level system design and project organization. This mode focuses on architectural decisions, system structure, and maintaining project-wide consistency.
+### Advanced Commands
 
-#### Key Capabilities
-- 🏗️ **System Design**: Create and maintain architecture
-- 📐 **Pattern Definition**: Establish coding patterns and standards
-- 🔄 **Project Structure**: Organize code and resources
-- 📋 **Documentation**: Maintain technical documentation
-- 🤝 **Team Collaboration**: Guide implementation standards
+- `mb archive [branch]` - Archive a branch's memory bank
+- `mb merge <branch>` - Merge a branch's memory bank into the current branch
+- `mb rebase <branch>` - Rebase current memory bank on top of another branch's memory bank
+- `mb check` - Check if the memory bank is properly gitignored
+- `mb fix-gitignore` - Fix gitignore settings
+- `mb help` - Show help information
 
-#### Real-time Update Triggers
-Architect mode actively monitors and updates Memory Bank files based on:
-- 🎯 Architectural decisions and changes
-- 📊 System pattern definitions
-- 🔄 Project structure updates
-- 📝 Documentation requirements
-- ⚡ Implementation guidance needs
+## Automatic Operation
 
-#### Memory Bank Integration
-```mermaid
-graph TD
-    A[Architect Mode] --> B[Design Decisions]
-    A --> C[Pattern Definition]
-    B --> D[Memory Bank Updates]
-    C --> D
-    D --> E[activeContext.md]
-    D --> F[progress.md]
-    D --> G[decisionLog.md]
-    E --> H[Design Status]
-    F --> I[Architecture Progress]
-    G --> J[Design Decisions]
-```
+The system automatically:
 
-Switch to Architect mode when you need to:
-- Design system architecture
-- Define coding patterns
-- Structure new projects
-- Guide implementations
-- Make architectural decisions
+1. Saves the current memory bank before switching branches
+2. Loads the appropriate memory bank after switching branches
+3. Updates the memory bank after merging branches
+4. Handles memory bank inheritance when creating new branches (branch chaining)
+5. Merges memory banks appropriately during rebase operations
+6. Ensures memory banks are properly gitignored
 
-### Code Mode
-Roo Code Memory Bank's Code mode is your primary interface for implementation and development. This mode specializes in writing, modifying, and maintaining code while following established patterns.
+## Privacy and Version Control
 
-#### Key Capabilities
-- 💻 **Code Creation**: Write new code and features
-- 🔧 **Code Modification**: Update existing implementations
-- 📚 **Documentation**: Add code comments and docs
-- ✨ **Quality Control**: Maintain code standards
-- 🔄 **Refactoring**: Improve code structure
+The memory bank management system is designed to remain private and not get tracked in version control:
 
-#### Real-time Update Triggers
-Code mode actively monitors and updates Memory Bank files based on:
-- 📝 Code implementations
-- 🔄 Feature updates
-- 🎯 Pattern applications
-- ⚡ Performance improvements
-- 📚 Documentation updates
+- All implementation code lives in ~/.zshrc or other user-level configuration files
+- Git hooks are configured at the user level, not the repository level
+- The memory-bank directory is automatically added to .gitignore
+- A global gitignore rule is added as a fallback
 
-#### Memory Bank Integration
-```mermaid
-graph TD
-    A[Code Mode] --> B[Implementation]
-    A --> C[Documentation]
-    B --> D[Memory Bank Updates]
-    C --> D
-    D --> E[activeContext.md]
-    D --> F[progress.md]
-    D --> G[decisionLog.md]
-    E --> H[Current Tasks]
-    F --> I[Code Progress]
-    G --> J[Implementation Decisions]
-```
+## Troubleshooting
 
-Switch to Code mode when you need to:
-- Implement new features
-- Modify existing code
-- Add documentation
-- Apply coding patterns
-- Refactor code
+### Memory Bank Not Found
 
-### Ask Mode
-Roo Code Memory Bank's Ask mode serves as your knowledge base interface and documentation assistant. This mode excels at providing information, explaining concepts, and maintaining project knowledge.
+If you get a "Memory bank not found" error:
 
-#### Key Capabilities
-- 💡 **Knowledge Sharing**: Access project insights
-- 📚 **Documentation**: Create and update docs
-- 🔍 **Code Explanation**: Clarify implementations
-- 🤝 **Collaboration**: Share understanding
-- 📖 **Pattern Education**: Explain system patterns
+1. Check if you're in a git repository
+2. Verify that the memory bank exists in the central location
+3. Run `mb create` to create a new memory bank
 
-#### Real-time Update Triggers
-Ask mode actively monitors and updates Memory Bank files based on:
-- ❓ Knowledge requests
-- 📝 Documentation needs
-- 🔄 Pattern explanations
-- 💡 Implementation insights
-- 📚 Learning outcomes
+### Git Hooks Not Working
 
-#### Memory Bank Integration
-```mermaid
-graph TD
-    A[Ask Mode] --> B[Knowledge Sharing]
-    A --> C[Documentation]
-    B --> D[Memory Bank Updates]
-    C --> D
-    D --> E[activeContext.md]
-    D --> F[progress.md]
-    D --> G[decisionLog.md]
-    E --> H[Current Topics]
-    F --> I[Documentation Progress]
-    G --> J[Knowledge Decisions]
-```
+If git hooks are not working:
 
-Switch to Ask mode when you need to:
-- Understand code patterns
-- Get implementation guidance
-- Create documentation
-- Share knowledge
-- Learn system concepts
+1. Check if the hooks are executable: `ls -la ~/.git-hooks`
+2. Verify that git is using the custom hooks directory: `git config --get core.hooksPath`
+3. Try running the hooks manually: `~/.git-hooks/post-checkout`
+4. Verify that all hooks are installed: `ls -la ~/.git-hooks` should show pre-checkout, post-checkout, post-merge, and post-rebase
 
-### Debug Mode
-Roo Code Memory Bank's Debug mode specializes in systematic problem-solving and troubleshooting. This mode employs strategic analysis and verification to identify and resolve issues.
+### Memory Bank Not Gitignored
 
-#### Key Capabilities
-- 🔍 **Issue Investigation**: Analyze problems systematically
-- 📊 **Error Analysis**: Track error patterns
-- 🎯 **Root Cause Finding**: Identify core issues
-- ✅ **Solution Verification**: Validate fixes
-- 📝 **Problem Documentation**: Record findings
+If your memory bank is not being gitignored:
 
-#### Real-time Update Triggers
-Debug mode actively monitors and updates Memory Bank files based on:
-- 🐛 Bug discoveries
-- 📈 Performance issues
-- 🔄 Error patterns
-- ⚡ System bottlenecks
-- 📝 Fix verifications
-
-#### Memory Bank Integration
-```mermaid
-graph TD
-    A[Debug Mode] --> B[Investigation]
-    A --> C[Analysis]
-    B --> D[Memory Bank Updates]
-    C --> D
-    D --> E[activeContext.md]
-    D --> F[progress.md]
-    D --> G[decisionLog.md]
-    E --> H[Current Issues]
-    F --> I[Debug Progress]
-    G --> J[Solution Decisions]
-```
-
-Switch to Debug mode when you need to:
-- Investigate issues
-- Analyze errors
-- Find root causes
-- Verify fixes
-- Document problems
-
-### Session Management
-- ⚡ **Real-time Updates**: Memory Bank automatically stays synchronized with your work
-- 💾 **Manual Updates**: Use "UMB" or "update memory bank" as a fallback when:
-  - Ending a session unexpectedly
-  - Halting mid-task
-  - Recovering from connection issues
-  - Forcing a full synchronization
-
-## 📖 Documentation
-
-- [Developer Deep Dive](https://github.com/GreatScottyMac/roo-code-memory-bank/blob/main/developer-primer.md)
-- [Update Log](https://github.com/GreatScottyMac/roo-code-memory-bank/blob/main/updates.md)
-
----
-
-<div align="center">
-
-**[View on GitHub](https://github.com/GreatScottyMac/roo-code-memory-bank) • [Report Issues](https://github.com/GreatScottyMac/roo-code-memory-bank/issues) • [Get Roo Code](https://github.com/RooVetGit/Roo-Code)**
-
-</div>
+1. Run `mb check` to verify gitignore status
+2. Run `mb fix-gitignore` to fix gitignore settings
 
 ## License
 
-Apache 2.0 © 2025 [GreatScottyMac](LICENSE)
+MIT

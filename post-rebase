@@ -1,0 +1,170 @@
+#!/bin/zsh
+# post-rebase hook
+# Updates the memory bank after rebasing branches
+# This hook is called after a successful rebase operation
+
+# Source the memory bank functions
+# This is a workaround since git hooks don't inherit shell functions
+# Try to find the memory_bank_functions.sh file
+if [[ -f "$HOME/.git-hooks/memory_bank_functions.sh" ]]; then
+  source "$HOME/.git-hooks/memory_bank_functions.sh"
+elif [[ -f "$(git rev-parse --show-toplevel)/memory_bank_functions.sh" ]]; then
+  source "$(git rev-parse --show-toplevel)/memory_bank_functions.sh"
+elif [[ -f "$HOME/code/domains/me/roo-code-memory-bank/memory_bank_functions.sh" ]]; then
+  source "$HOME/code/domains/me/roo-code-memory-bank/memory_bank_functions.sh"
+fi
+
+# Define minimal versions of functions if they're not available
+if ! type get_project_root &>/dev/null; then
+  function get_project_root() {
+    git rev-parse --show-toplevel 2>/dev/null || echo "$PWD"
+  }
+  
+  function get_project_domain() {
+    local project_root="$1"
+    project_root="${project_root/#$HOME/~}"
+    
+    if [[ "$project_root" =~ ~/code/domains/([^/]+) ]]; then
+      echo "${BASH_REMATCH[1]}"
+    elif [[ "$project_root" =~ ~/code/([^/]+)/([^/]+) ]]; then
+      echo "${BASH_REMATCH[1]}"
+    else
+      echo "unknown"
+    fi
+  }
+  
+  function get_project_name() {
+    basename "$1"
+  }
+  
+  function get_git_branch() {
+    git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "default"
+  }
+  
+  function get_central_mb_path() {
+    echo "$HOME/code/ai-memory-banks/$1/$2/$3"
+  }
+  
+  function get_project_mb_path() {
+    echo "$1/memory-bank"
+  }
+  
+  function sync_to_central() {
+    local project_root="$1"
+    local domain="$2"
+    local project="$3"
+    local branch="$4"
+    
+    local project_mb="$project_root/memory-bank"
+    local central_mb="$HOME/code/ai-memory-banks/$domain/$project/$branch"
+    
+    mkdir -p "$central_mb"
+    
+    if [[ -d "$project_mb" ]]; then
+      cp -r "$project_mb/"* "$central_mb/" 2>/dev/null
+    fi
+  }
+  
+  function sync_to_project() {
+    local project_root="$1"
+    local domain="$2"
+    local project="$3"
+    local branch="$4"
+    
+    local project_mb="$project_root/memory-bank"
+    local central_mb="$HOME/code/ai-memory-banks/$domain/$project/$branch"
+    
+    mkdir -p "$project_mb"
+    
+    if [[ -d "$central_mb" ]]; then
+      cp -r "$central_mb/"* "$project_mb/" 2>/dev/null
+    fi
+  }
+  
+  function ensure_gitignore() {
+    local project_root="$1"
+    local gitignore="$project_root/.gitignore"
+    
+    if [[ ! -f "$gitignore" ]]; then
+      touch "$gitignore"
+    fi
+    
+    if ! grep -q "^/memory-bank" "$gitignore"; then
+      echo "/memory-bank" >> "$gitignore"
+    fi
+  }
+  
+  function merge_memory_banks() {
+    local source_domain="$1"
+    local source_project="$2"
+    local source_branch="$3"
+    local target_domain="$4"
+    local target_project="$5"
+    local target_branch="$6"
+    
+    local source_mb="$HOME/code/ai-memory-banks/$source_domain/$source_project/$source_branch"
+    local target_mb="$HOME/code/ai-memory-banks/$target_domain/$target_project/$target_branch"
+    
+    # Simple merge strategy: for each file in source, append unique content to target
+    for file in "$source_mb"/*.md; do
+      filename=$(basename "$file")
+      target_file="$target_mb/$filename"
+      
+      if [[ -f "$target_file" ]]; then
+        echo "Merging $filename..."
+        
+        # Create a temporary file with merged content
+        cat "$target_file" > "$target_file.tmp"
+        echo -e "\n## Merged from $source_branch on $(date +"%Y-%m-%d %H:%M:%S")\n" >> "$target_file.tmp"
+        
+        # Extract content sections from source file and append to target
+        sed -n '/^## /,$p' "$file" >> "$target_file.tmp"
+        
+        # Replace target with merged content
+        mv "$target_file.tmp" "$target_file"
+      else
+        echo "Copying $filename (not present in target)..."
+        cp "$file" "$target_file"
+      fi
+    done
+  }
+fi
+
+# Get current project info
+project_root=$(get_project_root)
+domain=$(get_project_domain "$project_root")
+project=$(get_project_name "$project_root")
+branch=$(get_git_branch)
+
+# Get the base branch that was rebased onto
+# This is typically the branch specified in the rebase command
+base_branch=$(git reflog -1 | grep -o "onto [^:]*" | sed 's/onto //' | cut -d' ' -f1)
+
+# Update memory bank in central storage
+sync_to_central "$project_root" "$domain" "$project" "$branch"
+
+# Add a note about the rebase to activeContext.md
+project_mb=$(get_project_mb_path "$project_root")
+if [[ -f "$project_mb/activeContext.md" ]]; then
+  if [[ -n "$base_branch" ]]; then
+    echo -e "\n## Rebase Event\n\n* $(date +"%Y-%m-%d %H:%M:%S") - Rebased branch $branch onto $base_branch\n" >> "$project_mb/activeContext.md"
+    
+    # Merge memory banks if base branch has a memory bank
+    base_mb=$(get_central_mb_path "$domain" "$project" "$base_branch")
+    if [[ -d "$base_mb" ]]; then
+      # Merge the base branch memory bank into the current branch
+      merge_memory_banks "$domain" "$project" "$base_branch" "$domain" "$project" "$branch"
+      echo "Merged memory bank from $base_branch into $branch during rebase"
+    fi
+    
+    # Sync back to central
+    sync_to_central "$project_root" "$domain" "$project" "$branch"
+    
+    echo "Updated memory bank with rebase information"
+  fi
+fi
+
+# Ensure memory bank is gitignored
+ensure_gitignore "$project_root"
+
+exit 0

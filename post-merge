@@ -1,0 +1,126 @@
+#!/bin/zsh
+# post-merge hook
+# Updates the memory bank after merging branches
+# Args: $1 = flag (1 = squash merge, 0 = regular merge)
+
+# Source the memory bank functions
+# This is a workaround since git hooks don't inherit shell functions
+# Try to find the memory_bank_functions.sh file
+if [[ -f "$HOME/.git-hooks/memory_bank_functions.sh" ]]; then
+  source "$HOME/.git-hooks/memory_bank_functions.sh"
+elif [[ -f "$(git rev-parse --show-toplevel)/memory_bank_functions.sh" ]]; then
+  source "$(git rev-parse --show-toplevel)/memory_bank_functions.sh"
+elif [[ -f "$HOME/code/domains/me/roo-code-memory-bank/memory_bank_functions.sh" ]]; then
+  source "$HOME/code/domains/me/roo-code-memory-bank/memory_bank_functions.sh"
+fi
+
+# Define minimal versions of functions if they're not available
+if ! type get_project_root &>/dev/null; then
+  function get_project_root() {
+    git rev-parse --show-toplevel 2>/dev/null || echo "$PWD"
+  }
+  
+  function get_project_domain() {
+    local project_root="$1"
+    project_root="${project_root/#$HOME/~}"
+    
+    if [[ "$project_root" =~ ~/code/domains/([^/]+) ]]; then
+      echo "${BASH_REMATCH[1]}"
+    elif [[ "$project_root" =~ ~/code/([^/]+)/([^/]+) ]]; then
+      echo "${BASH_REMATCH[1]}"
+    else
+      echo "unknown"
+    fi
+  }
+  
+  function get_project_name() {
+    basename "$1"
+  }
+  
+  function get_git_branch() {
+    git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "default"
+  }
+  
+  function get_central_mb_path() {
+    echo "$HOME/code/ai-memory-banks/$1/$2/$3"
+  }
+  
+  function get_project_mb_path() {
+    echo "$1/memory-bank"
+  }
+  
+  function sync_to_central() {
+    local project_root="$1"
+    local domain="$2"
+    local project="$3"
+    local branch="$4"
+    
+    local project_mb="$project_root/memory-bank"
+    local central_mb="$HOME/code/ai-memory-banks/$domain/$project/$branch"
+    
+    mkdir -p "$central_mb"
+    
+    if [[ -d "$project_mb" ]]; then
+      cp -r "$project_mb/"* "$central_mb/" 2>/dev/null
+    fi
+  }
+  
+  function sync_to_project() {
+    local project_root="$1"
+    local domain="$2"
+    local project="$3"
+    local branch="$4"
+    
+    local project_mb="$project_root/memory-bank"
+    local central_mb="$HOME/code/ai-memory-banks/$domain/$project/$branch"
+    
+    mkdir -p "$project_mb"
+    
+    if [[ -d "$central_mb" ]]; then
+      cp -r "$central_mb/"* "$project_mb/" 2>/dev/null
+    fi
+  }
+  
+  function ensure_gitignore() {
+    local project_root="$1"
+    local gitignore="$project_root/.gitignore"
+    
+    if [[ ! -f "$gitignore" ]]; then
+      touch "$gitignore"
+    fi
+    
+    if ! grep -q "^/memory-bank" "$gitignore"; then
+      echo "/memory-bank" >> "$gitignore"
+    fi
+  }
+fi
+
+# Get current project info
+project_root=$(get_project_root)
+domain=$(get_project_domain "$project_root")
+project=$(get_project_name "$project_root")
+branch=$(get_git_branch)
+
+# Update memory bank in central storage
+sync_to_central "$project_root" "$domain" "$project" "$branch"
+
+# Add a note about the merge to activeContext.md
+project_mb=$(get_project_mb_path "$project_root")
+if [[ -f "$project_mb/activeContext.md" ]]; then
+  # Get the merged branch name from git reflog
+  merged_branch=$(git reflog -1 | grep -o "merge [^:]*" | sed 's/merge //')
+  
+  if [[ -n "$merged_branch" ]]; then
+    echo -e "\n## Merge Event\n\n* $(date +"%Y-%m-%d %H:%M:%S") - Merged branch $merged_branch into $branch\n" >> "$project_mb/activeContext.md"
+    
+    # Sync back to central
+    sync_to_central "$project_root" "$domain" "$project" "$branch"
+    
+    echo "Updated memory bank with merge information"
+  fi
+fi
+
+# Ensure memory bank is gitignored
+ensure_gitignore "$project_root"
+
+exit 0

@@ -1,0 +1,77 @@
+#!/bin/zsh
+# pre-checkout hook
+# Saves the current memory bank before switching branches
+
+# Source the memory bank functions
+# This is a workaround since git hooks don't inherit shell functions
+# Try to find the memory_bank_functions.sh file
+if [[ -f "$HOME/.git-hooks/memory_bank_functions.sh" ]]; then
+  source "$HOME/.git-hooks/memory_bank_functions.sh"
+elif [[ -f "$(git rev-parse --show-toplevel)/memory_bank_functions.sh" ]]; then
+  source "$(git rev-parse --show-toplevel)/memory_bank_functions.sh"
+elif [[ -f "$HOME/code/domains/me/roo-code-memory-bank/memory_bank_functions.sh" ]]; then
+  source "$HOME/code/domains/me/roo-code-memory-bank/memory_bank_functions.sh"
+fi
+
+# Define minimal versions of functions if they're not available
+if ! type get_project_root &>/dev/null; then
+  function get_project_root() {
+    git rev-parse --show-toplevel 2>/dev/null || echo "$PWD"
+  }
+  
+  function get_project_domain() {
+    local project_root="$1"
+    project_root="${project_root/#$HOME/~}"
+    
+    if [[ "$project_root" =~ ~/code/domains/([^/]+) ]]; then
+      echo "${BASH_REMATCH[1]}"
+    elif [[ "$project_root" =~ ~/code/([^/]+)/([^/]+) ]]; then
+      echo "${BASH_REMATCH[1]}"
+    else
+      echo "unknown"
+    fi
+  }
+  
+  function get_project_name() {
+    basename "$1"
+  }
+  
+  function get_git_branch() {
+    git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "default"
+  }
+  
+  function get_central_mb_path() {
+    echo "$HOME/code/ai-memory-banks/$1/$2/$3"
+  }
+  
+  function get_project_mb_path() {
+    echo "$1/memory-bank"
+  }
+  
+  function sync_to_central() {
+    local project_root="$1"
+    local domain="$2"
+    local project="$3"
+    local branch="$4"
+    
+    local project_mb="$project_root/memory-bank"
+    local central_mb="$HOME/code/ai-memory-banks/$domain/$project/$branch"
+    
+    mkdir -p "$central_mb"
+    
+    if [[ -d "$project_mb" ]]; then
+      cp -r "$project_mb/"* "$central_mb/" 2>/dev/null
+    fi
+  }
+fi
+
+# Get current project info
+project_root=$(get_project_root)
+domain=$(get_project_domain "$project_root")
+project=$(get_project_name "$project_root")
+branch=$(get_git_branch)
+
+# Save current memory bank
+sync_to_central "$project_root" "$domain" "$project" "$branch"
+
+exit 0
